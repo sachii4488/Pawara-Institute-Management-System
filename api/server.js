@@ -1,0 +1,93 @@
+require("dotenv").config();
+
+const express = require("express");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const mongoose = require("mongoose");
+const Stripe = require("stripe");
+
+// ROUTERS
+const instituteRouter = require("./router/institute.router");
+const studentRouter = require("./router/student.router");
+const classRouter = require("./router/class.router");
+const subjectRouter = require("./router/subject.router");
+const teacherRouter = require("./router/teacher.router");
+const examRouter = require("./router/examination.router");
+const attendanceRoutes = require("./router/attendance.router");
+const periodRoutes = require("./router/period.router");
+const noticeRoutes = require("./router/notice.router");
+const { authCheck } = require("./controller/auth.controller");
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+const corsOptions = { exposedHeaders: "Authorization" };
+app.use(cors(corsOptions));
+
+// MongoDB Connection
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("MongoDB is connected successfully to Atlas.");
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+  });
+
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+// Payment Route
+app.post("/api/payment/create-payment-intent", async (req, res) => {
+  try {
+    let { amount, currency } = req.body;
+
+    // Validate amount
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: "Invalid payment amount" });
+    }
+
+    // Convert amount to cents (Stripe requires smallest currency unit)
+    amount = Math.round(amount * 100); 
+
+    // Default currency to LKR
+    currency = currency || "lkr";
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency,
+      payment_method_types: ["card"],
+    });
+
+
+    res.json({ clientSecret: paymentIntent.client_secret });
+  } catch (error) {
+    console.error("Stripe Error:", error.message);
+    res.status(500).json({ error: "Payment processing failed" });
+  }
+});
+
+// API Routes
+app.use("/api/institute", instituteRouter);
+app.use("/api/student", studentRouter);
+app.use("/api/teacher", teacherRouter);
+app.use("/api/class", classRouter);
+app.use("/api/subject", subjectRouter);
+app.use("/api/examination", examRouter);
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/period", periodRoutes);
+app.use("/api/notices", noticeRoutes);
+
+app.get("/api/auth/check", authCheck);
+
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => {
+  console.log(`Server is running at port => ${PORT}`);
+});
