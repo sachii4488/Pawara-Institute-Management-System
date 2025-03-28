@@ -12,6 +12,7 @@ const CheckoutForm = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
+    const [selectedCardType, setSelectedCardType] = useState("Visa"); // Default card type
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -64,7 +65,7 @@ const CheckoutForm = () => {
 
     return (
         <div style={styles.container}>
-            <h2 style={styles.title}>Make a Payment</h2>
+            <h2 style={styles.title}>💳 Make a Payment</h2>
             <form onSubmit={handleSubmit} style={styles.form}>
                 <label style={styles.label}>
                     Payment Amount (LKR)
@@ -78,16 +79,46 @@ const CheckoutForm = () => {
                     />
                 </label>
 
+                {/* Select Card Type */}
+                <label style={styles.label}>
+                    Card Type
+                    <select
+                        value={selectedCardType}
+                        onChange={(e) => setSelectedCardType(e.target.value)}
+                        style={styles.select}
+                    >
+                        <option value="Visa">Visa</option>
+                        <option value="MasterCard">MasterCard</option>
+                        <option value="American Express">American Express</option>
+                        <option value="Discover">Discover</option>
+                    </select>
+                </label>
+
                 <label style={styles.label}>Card Details</label>
                 <div style={styles.cardContainer}>
-                    <CardElement options={{ hidePostalCode: true }} />
+                    <CardElement
+                        options={{
+                            style: {
+                                base: {
+                                    fontSize: "16px",
+                                    color: "#424770",
+                                    "::placeholder": {
+                                        color: "#aab7c4",
+                                    },
+                                },
+                                invalid: {
+                                    color: "#ff6347",
+                                },
+                            },
+                        }}
+                    />
                 </div>
 
-                {error && <p style={{ color: "red" }}>{error}</p>}
-                {success && <p style={{ color: "green" }}>Payment Successful!</p>}
+                {error && <p style={styles.errorText}>{error}</p>}
+                {success && <p style={styles.successText}>✅ Payment Successful!</p>}
 
                 <button type="submit" disabled={!stripe || isProcessing} style={styles.button}>
-                    {isProcessing ? "Processing..." : "Pay Now"}
+                    {isProcessing ? "Processing..." : `Pay Now with ${selectedCardType}`}
                 </button>
             </form>
         </div>
@@ -105,53 +136,78 @@ const Payment = () => {
 
 const styles = {
     container: {
-        maxWidth: "450px",
+        maxWidth: "500px",
         margin: "50px auto",
-        padding: "20px",
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
-        backgroundColor: "#fff",
+        padding: "25px",
+        border: "1px solid #e1e1e1",
+        borderRadius: "12px",
+        boxShadow: "0px 6px 18px rgba(0, 0, 0, 0.1)",
+        backgroundColor: "#fefefe",
     },
     title: {
         textAlign: "center",
         marginBottom: "20px",
         color: "#333",
+        fontWeight: "bold",
+        fontSize: "24px",
     },
     label: {
         display: "block",
         fontSize: "14px",
-        marginBottom: "5px",
+        marginBottom: "8px",
         color: "#333",
+        fontWeight: "bold",
     },
     form: {
         display: "flex",
         flexDirection: "column",
+        gap: "15px",
     },
     input: {
         width: "100%",
-        padding: "10px",
-        marginBottom: "15px",
+        padding: "12px",
         border: "1px solid #ccc",
-        borderRadius: "5px",
+        borderRadius: "8px",
         fontSize: "16px",
+        transition: "border 0.3s",
+    },
+    select: {
+        width: "100%",
+        padding: "12px",
+        border: "1px solid #ccc",
+        borderRadius: "8px",
+        fontSize: "16px",
+        backgroundColor: "#fff",
+        cursor: "pointer",
     },
     cardContainer: {
-        padding: "10px",
+        padding: "12px",
         border: "1px solid #ccc",
-        borderRadius: "5px",
+        borderRadius: "8px",
         marginBottom: "15px",
-        minHeight: "50px",
+        backgroundColor: "#f9f9f9",
     },
     button: {
-        padding: "12px",
-        backgroundColor: "#007bff",
+        padding: "14px",
+        backgroundColor: "#4caf50",
         color: "#fff",
         border: "none",
-        borderRadius: "5px",
-        fontSize: "16px",
+        borderRadius: "8px",
+        fontSize: "18px",
         cursor: "pointer",
         transition: "0.3s",
+    },
+    errorText: {
+        color: "red",
+        fontSize: "14px",
+        marginTop: "5px",
+        textAlign: "center",
+    },
+    successText: {
+        color: "green",
+        fontSize: "14px",
+        marginTop: "5px",
+        textAlign: "center",
     },
 };
 
