@@ -5,9 +5,9 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const Stripe = require("stripe");
-const Payment = require("./model/payments"); // Make sure this file exists
+const Payment = require("./model/payments");
 
-// Import routers
+// Routers
 const instituteRouter = require("./router/institute.router");
 const studentRouter = require("./router/student.router");
 const classRouter = require("./router/class.router");
@@ -25,74 +25,81 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(cors({ exposedHeaders: "Authorization" }));
 
-const corsOptions = { exposedHeaders: "Authorization" };
-app.use(cors(corsOptions));
+// ✅ MongoDB Connection (combined from both versions)
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("✅ MongoDB connected to Atlas"))
+.catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// MongoDB connection
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB is connected successfully to Atlas.");
-  })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
-  });
-
-// Stripe setup
+// ✅ Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Route: Create PaymentIntent
+// ✅ Route: Create Payment Intent
 app.post("/api/payment/create-payment-intent", async (req, res) => {
   try {
     let { amount, currency } = req.body;
-
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: "Invalid payment amount" });
     }
-
-    amount = Math.round(amount * 100); // convert to cents (smallest unit)
+    amount = Math.round(amount * 100);
     currency = currency || "lkr";
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency,
       payment_method_types: ["card"],
-      expand: ["charges"], // ensures receipt_url will be available
+      expand: ["charges"], // important for receipt_url
     });
 
     res.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
-    console.error("Stripe Error:", error.message);
-    res.status(500).json({ error: "Payment processing failed" });
+    console.error("❌ Stripe error:", error.message);
+    res.status(500).json({ error: "Payment intent creation failed" });
   }
 });
 
-// Route: Save receipt to MongoDB
+// ✅ Route: Save Receipt
 app.post("/api/payment/save-receipt", async (req, res) => {
   try {
-    console.log("📥 Saving receipt to DB:", req.body); // ✅ LOG
+    const {
+      paymentIntentId,
+      amount,
+      status,
+      receipt_url,
+      studentId,
+      studentName,
+      studentUniqueId, // optional, if you're saving this too
+    } = req.body;
 
-    const { paymentIntentId, amount, status, receipt_url } = req.body;
+    if (!studentId || !studentName) {
+      return res.status(400).json({ error: "Student ID and Name are required" });
+    }
 
     const newPayment = new Payment({
       paymentIntentId,
       amount,
       status,
       receipt_url,
+      studentId,
+      studentName,
+      studentUniqueId, // save if available
     });
 
     await newPayment.save();
-    console.log("✅ Receipt saved successfully");
+    console.log(`✅ Receipt saved for ${studentName} (${studentId})`);
 
     res.status(200).json({ message: "Receipt saved successfully" });
   } catch (err) {
-    console.error("❌ Error saving receipt:", err);
+    console.error("❌ Failed to save receipt:", err);
     res.status(500).json({ error: "Failed to save receipt" });
   }
 });
 
-// Other routers
+// ✅ Routes
 app.use("/api/institute", instituteRouter);
 app.use("/api/student", studentRouter);
 app.use("/api/teacher", teacherRouter);
@@ -104,8 +111,8 @@ app.use("/api/period", periodRoutes);
 app.use("/api/notices", noticeRoutes);
 app.get("/api/auth/check", authCheck);
 
-// Start server
+// ✅ Start Server
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`Server is running at port => ${PORT}`);
+  console.log(`🚀 Server is running at port => ${PORT}`);
 });
