@@ -5,8 +5,9 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const Stripe = require("stripe");
+const Payment = require("./model/payments"); // Make sure this file exists
 
-// ROUTERS
+// Import routers
 const instituteRouter = require("./router/institute.router");
 const studentRouter = require("./router/student.router");
 const classRouter = require("./router/class.router");
@@ -28,12 +29,9 @@ app.use(cookieParser());
 const corsOptions = { exposedHeaders: "Authorization" };
 app.use(cors(corsOptions));
 
-// MongoDB Connection
+// MongoDB connection
 mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB is connected successfully to Atlas.");
   })
@@ -41,31 +39,27 @@ mongoose
     console.error("MongoDB connection error:", err);
   });
 
-// Initialize Stripe
+// Stripe setup
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Payment Route
+// Route: Create PaymentIntent
 app.post("/api/payment/create-payment-intent", async (req, res) => {
   try {
     let { amount, currency } = req.body;
 
-    // Validate amount
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: "Invalid payment amount" });
     }
 
-    // Convert amount to cents (Stripe requires smallest currency unit)
-    amount = Math.round(amount * 100); 
-
-    // Default currency to LKR
+    amount = Math.round(amount * 100); // convert to cents (smallest unit)
     currency = currency || "lkr";
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency,
       payment_method_types: ["card"],
+      expand: ["charges"], // ensures receipt_url will be available
     });
-
 
     res.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
@@ -74,7 +68,31 @@ app.post("/api/payment/create-payment-intent", async (req, res) => {
   }
 });
 
-// API Routes
+// Route: Save receipt to MongoDB
+app.post("/api/payment/save-receipt", async (req, res) => {
+  try {
+    console.log("📥 Saving receipt to DB:", req.body); // ✅ LOG
+
+    const { paymentIntentId, amount, status, receipt_url } = req.body;
+
+    const newPayment = new Payment({
+      paymentIntentId,
+      amount,
+      status,
+      receipt_url,
+    });
+
+    await newPayment.save();
+    console.log("✅ Receipt saved successfully");
+
+    res.status(200).json({ message: "Receipt saved successfully" });
+  } catch (err) {
+    console.error("❌ Error saving receipt:", err);
+    res.status(500).json({ error: "Failed to save receipt" });
+  }
+});
+
+// Other routers
 app.use("/api/institute", instituteRouter);
 app.use("/api/student", studentRouter);
 app.use("/api/teacher", teacherRouter);
@@ -84,9 +102,9 @@ app.use("/api/examination", examRouter);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/period", periodRoutes);
 app.use("/api/notices", noticeRoutes);
-
 app.get("/api/auth/check", authCheck);
 
+// Start server
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server is running at port => ${PORT}`);
