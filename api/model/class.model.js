@@ -6,7 +6,7 @@ const asignSubTeachSchema = new mongoose.Schema({
 });
 
 const classSchema = new mongoose.Schema({
-  institute: { type: mongoose.Schema.ObjectId, ref: 'Institue' },
+  institute: { type: mongoose.Schema.ObjectId, ref: 'Institute' },
   class_text: { type: String, required: true },
   class_num: { type: Number, required: true },
   asignSubTeach: [asignSubTeachSchema],

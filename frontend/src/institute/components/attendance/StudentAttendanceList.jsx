@@ -117,7 +117,7 @@ const StudentAttendanceList = () => {
     }
   };
 
-  const handleClass = (e) => {
+  /*const handleClass = (e) => {
     let newParam;
     if (e.target.value !== "") {
       setSelectedClass(e.target.value);
@@ -127,7 +127,16 @@ const StudentAttendanceList = () => {
       delete newParam["student_classes"];
     }
     setParams(newParam);
+  };*/
+  const handleClass = (e) => {
+    const value = e.target.value;
+    setSelectedClass(value);
+    setParams((prev) => ({
+      ...prev,
+      student_classes: value[0] || ""  // if multiple, pick the first class ID
+    }));
   };
+  
 
   const handleSearch = (e) => {
     let newParam;
@@ -190,7 +199,7 @@ const StudentAttendanceList = () => {
                 fullWidth
               />
 
-              {selectedClass && <Attendee params={params} classId={selectedClass} handleMessage={handleMessage} />}
+              {/*selectedClass && <Attendee params={params} classId={selectedClass} handleMessage={handleMessage} />*/}
             </Box>
             </Item>
           </Grid>
@@ -203,9 +212,9 @@ const StudentAttendanceList = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>Name</TableCell>
-                    <TableCell align="right">Gender</TableCell>
-                    <TableCell align="right">Guardian Phone</TableCell>
-                    <TableCell align="right">Class</TableCell>
+                    {/*<TableCell align="right">Gender</TableCell>*/}
+                    {/*<TableCell align="right">Guardian Phone</TableCell>*/}
+                    <TableCell align="center">Class</TableCell>
                     <TableCell align="right">Percentage</TableCell>
                     <TableCell align="right">View</TableCell>
                   </TableRow>
@@ -214,9 +223,9 @@ const StudentAttendanceList = () => {
                   {students.map((student, i) => (
                     <TableRow key={i}>
                       <TableCell>{student.name}</TableCell>
-                      <TableCell align="right">{student.gender}</TableCell>
-                      <TableCell align="right">{student.guardian_phone}</TableCell>
-                      <TableCell align="right">
+                     {/* <TableCell align="right">{student.gender}</TableCell>*/}
+                      {/*<TableCell align="right">{student.guardian_phone}</TableCell>*/}
+                      <TableCell align="center">
   {student.student_classes.map((cls) => cls.class_text).join(', ')}
 </TableCell>
 

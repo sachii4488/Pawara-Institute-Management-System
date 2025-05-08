@@ -125,7 +125,7 @@ export default function Institute() {
         { link: "/institute/students", component: "Students", icon: GroupIcon },
         { link: "/institute/teachers", component: "Teachers", icon: GroupIcon },
         { link: "/institute/periods", component: "Schedule", icon: CalendarMonthIcon },
-        // { link: "/institute/attendance", component: "Attendance", icon: RecentActorsIcon },
+         { link: "/institute/attendance", component: "Attendance", icon: RecentActorsIcon },
         // { link: "/institute/examinations", component: "Examinations", icon: ExplicitIcon},
         {link:"/institute/notice", component:"Notice", icon:CircleNotificationsIcon},
         {link:"/logout", component:"Log Out", icon:LogoutIcon}

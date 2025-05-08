@@ -7,14 +7,14 @@ const jwt = require("jsonwebtoken");
 const Class = require("../model/class.model"); 
 //const Student = require("../models/student.model");
 const QRCode = require("qrcode");
-
+const mongoose = require('mongoose');
 const jwtSecret = process.env.JWTSECRET;
 
 const Student = require("../model/student.model");
 const Attendance = require("../model/attendance.model");
 
 module.exports = {
-  getStudentWithQuery: async (req, res) => {
+  /*getStudentWithQuery: async (req, res) => {
     try {
       const filterQuery = {};
       const instituteId = req.user.instituteId;
@@ -48,63 +48,175 @@ module.exports = {
         message: "Error in fetching Student with query.",
       });
     }
-  },
-
-
- /*registerStudent: async (req, res) => {
-    const form = new formidable.IncomingForm();
-    form.parse(req, async (err, fields, files) => {
-      try {
-        const existingStudent = await Student.findOne({ email: fields.email[0] });
-        if (existingStudent) {
-          return res.status(400).json({ success: false, message: "Email Already Exist!" });
-        }
-  
-        const photo = files.image[0];
-        const oldPath = photo.filepath;
-        const originalFileName = photo.originalFilename.replace(" ", "_");
-  
-        const newPath = path.join(
-          __dirname,
-          "../../frontend/public/images/uploaded/student",
-          originalFileName
-        );
-        const photoData = fs.readFileSync(oldPath);
-        fs.writeFileSync(newPath, photoData);
-  
-        const salt = bcrypt.genSaltSync(10);
-        const hashPassword = bcrypt.hashSync(fields.password[0], salt);
-  
-        // Map class names to IDs
-        const classNames = fields.student_classes[0].split(","); // Assuming comma-separated string
-        const classDocs = await Class.find({ class_text: { $in: classNames } });
-        const classIds = classDocs.map((cls) => cls._id);
-  
-        const newStudent = new Student({
-          email: fields.email[0],
-          name: fields.name[0],
-          student_classes: classIds,
-          guardian: fields.guardian[0],
-          guardian_phone: fields.guardian_phone[0],
-          age: fields.age[0],
-          gender: fields.gender[0],
-          student_image: originalFileName,
-          password: hashPassword,
-          institute: req.user.id,
-        });
-  
-        const savedData = await newStudent.save();
-        res.status(200).json({
-          success: true,
-          data: savedData,
-          message: "Student is Registered Successfully.",
-        });
-      } catch (error) {
-        console.error("ERROR in Register", error);
-        res.status(500).json({ success: false, message: "Failed Registration." });
-      }
-    });
   },*/
+
+  /*getStudentWithQuery: async (req, res) => {
+    try {
+      const filterQuery = {};
+      const instituteId = req.user.instituteId;
+      filterQuery["institute"] = instituteId;
+  
+      // Handle name search
+      if (req.query.search) {
+        filterQuery["name"] = { $regex: req.query.search, $options: "i" };
+      }
+      //added new
+      
+      const students = await Student.find(filterQuery)
+        .populate({
+          path: "student_classes",
+          match: req.query.class_search
+            ? { class_text: { $regex: req.query.class_search, $options: "i" } }
+            : {},
+          select: "class_text",
+        });
+  
+      // If class_search is used, remove students whose classes didn't match
+      const filtered = students.filter((s) =>
+        req.query.class_search
+          ? s.student_classes && s.student_classes.length > 0
+          : true
+      );
+  
+      res.status(200).json({ success: true, data: filtered });
+    } catch (error) {
+      console.log("Error in fetching Student with query:", error.message);
+      res.status(500).json({
+        success: false,
+        message: "Error in fetching Student with query.",
+      });
+    }
+  },
+  */
+  /*getStudentWithQuery: async (req, res) => {
+    try {
+      const filterQuery = {};
+      //const instituteId = req.user.instituteId;
+     // filterQuery["institute"] = instituteId;
+     filterQuery["institute"] = req.user.instituteId;
+  
+      if (req.query.search) {
+        filterQuery["name"] = { $regex: req.query.search, $options: "i" };
+      }
+  
+      if (req.query.student_classes) {
+        filterQuery["student_classes"] = req.query.student_classes; // ← keep this simple
+      }
+  
+      const students = await Student.find(filterQuery).populate({
+        path: "student_classes",
+        select: "class_text",
+      });
+  
+      res.status(200).json({ success: true, data: students });
+    } catch (error) {
+      console.error("Error in fetching Student with query:", error.message);
+      res.status(500).json({ success: false, message: "Server error." });
+    }
+  },
+  */
+ 
+
+/*getStudentWithQuery: async (req, res) => {
+  try {
+    const filterQuery = {
+      institute: req.user.instituteId
+    };
+
+    // Filter by name if provided
+    if (req.query.search) {
+      filterQuery["name"] = { $regex: req.query.search, $options: "i" };
+    }
+
+    // ✅ Filter by class ID if provided
+    if (req.query.student_classes) {
+      filterQuery["student_classes"] = {
+        $in: [mongoose.Types.ObjectId(req.query.student_classes)]
+      };
+    }
+
+    // Now find with filtered query
+    const students = await Student.find(filterQuery).populate({
+      path: "student_classes",
+      select: "class_text",
+    });
+
+    res.status(200).json({ success: true, data: students });
+
+  } catch (error) {
+    console.error("Error in fetching Student with query:", error.message);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+},*/
+/*getStudentWithQuery: async (req, res) => {
+  try {
+    const filterQuery = {
+      institute: req.user.instituteId
+    };
+
+    // ✅ Filter by student name if provided
+    if (req.query.search) {
+      filterQuery["name"] = { $regex: req.query.search, $options: "i" };
+    }
+
+    // ✅ Filter by student_classes if class is selected
+    if (req.query.student_classes) {
+      filterQuery["student_classes"] = {
+        $in: [new mongoose.Types.ObjectId(req.query.student_classes)]
+      };
+    }
+    
+    // ✅ Apply all filters at once
+    const students = await Student.find(filterQuery).populate({
+      path: "student_classes",
+      select: "class_text",
+    });
+
+    res.status(200).json({ success: true, data: students });
+
+  } catch (error) {
+    console.error("Error in fetching Student with query:", error.message);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+},
+*/
+//using class text instead of id
+getStudentWithQuery: async (req, res) => {
+  try {
+    const filterQuery = {
+      institute: req.user.instituteId,
+    };
+
+    if (req.query.search) {
+      filterQuery.name = { $regex: req.query.search, $options: "i" };
+    }
+
+    // Initial find without class_text filtering
+    let students = await Student.find(filterQuery).populate({
+      path: "student_classes",
+      select: "class_text"
+    });
+
+    // Manually filter by class_text
+    if (req.query.class_search) {
+      students = students.filter((student) =>
+        student.student_classes.some((cls) =>
+          cls.class_text === req.query.class_search
+        )
+      );
+    }
+
+    res.status(200).json({ success: true, data: students });
+
+  } catch (error) {
+    console.error("Error in fetching Student with query:", error.message);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+},
+
+  
+
+
   registerStudent: async (req, res) => {
     const form = new formidable.IncomingForm();
     form.parse(req, async (err, fields, files) => {
@@ -402,4 +514,34 @@ module.exports = {
       res.status(500).json({ success: false, message: "Server Error." });
     }
   },
+
+
+  
+// controller/student.controller.js
+
+getStudentsByClassId: async (req, res) => {
+  const classId = req.params.classId;
+
+  try {
+    // Find all students that have the given classId in their student_classes array
+    const students = await Student.find({ student_classes: classId }).populate({
+      path: "student_classes",
+      select: "class_text",
+    });
+
+    res.status(200).json({
+      success: true,
+      data: students.map(student => ({
+        ...student._doc,
+        student_classes: student.student_classes.map(cls => cls.class_text),
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching students by class ID:", error.message);
+    res.status(500).json({ success: false, message: "Server Error." });
+  }
+}
+  
 };
+
+
