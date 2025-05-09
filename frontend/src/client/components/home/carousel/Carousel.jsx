@@ -6,17 +6,17 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 const carouselItems = [
   {
-    image: "/images/static/pawara1.jpeg", 
+    image: "/images/static/5.jpg", 
     title: "Explore Our Classrooms",
     description: "Engaging and inspiring environments for every student.",
   },
   {
-    image: "/images/static/pawara3.jpeg",
+    image: "/images/static/4.jpg",
     title: "Empowering Students",
     description: "We believe in fostering the potential of each child.",
   },
   {
-    image: "/images/static/pawara4.jpeg",
+    image: "/images/static/6.jpg",
     title: "Learning Tools",
     description: "Providing the right tools for effective learning.",
   },

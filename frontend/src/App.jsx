@@ -10,7 +10,6 @@ import Home from "./client/components/home/Home";
 import Contact from "./client/components/contact/Contact";
 import Login from "./client/components/login/Login";
 import Register from "./client/components/register/Register";
-
 import Logout from "./client/components/logout/Logout";
 import Institute from "./institute/Institute";
 import InstituteDashboard from "./institute/components/dashboard/InstituteDashboard";
@@ -27,13 +26,14 @@ import TeacherDetails from "./teacher/components/teacher details/TeacherDetails"
 import TeacherExaminations from "./teacher/components/teacher examinations/TeacherExaminations";
 import TeacherSchedule from "./teacher/components/periods/TeacherSchedule";
 import AssignPeriod2 from "./institute/components/assign period/AssignPeriod2";
-import AttendanceDetails from "./institute/components/attendance/attendance details/AttendanceDetails";
-import StudentAttendanceList from "./institute/components/attendance/StudentAttendanceList";
+
 import Schedule from "./institute/components/periods/Schedule";
 import Examinations from "./institute/components/examinations/Examinations";
 import AttendanceTeacher from "./teacher/components/attendance/AttendanceTeacher";
 import AttendanceStudent from "./student/components/attendance/AttendanceStudent";
+import Attendance from "./institute/components/attendance/Attendance";
 import ScheduleStudent from "./student/components/schedule/ScheduleStudent";
+
 import NoticeInstitute from "./institute/components/notice/NoticeInstitute";
 import NoticeTeacher from "./teacher/components/notice/Notice";
 import NoticeStudent from "./student/components/notice/NoticeStudent";
@@ -45,6 +45,7 @@ import lightTheme from "./basic utility components/lightTheme";
 import ThemeToggleButton from "./basic utility components/ThemeToggleButton";
 import { useContext, useEffect, useState } from "react";
 import Payment from "./student/components/payment/Payment";
+
 
 function App() {
   const { authenticated, login,themeDark } = useContext(AuthContext);
@@ -65,10 +66,12 @@ function App() {
               <Route path="teachers" element={<Teachers />} />
               <Route path="assign-period" element={<AssignPeriod2 />} />
               <Route path="periods" element={<Schedule />} />
-              <Route path="attendance" element={<StudentAttendanceList />} />
-              <Route path="attendance-student/:studentId" element={<AttendanceDetails />} />
+              <Route path="attendance" element={<Attendance />} />
+             
+            
               <Route path="examinations" element={<Examinations />} />
               <Route path="notice" element={<NoticeInstitute/>} />
+              <Route path="attendance" element={<Attendance />} />
             </Route>
   
             <Route path="student"  element={<ProtectedRoute allowedRoles={['STUDENT']}><Student/></ProtectedRoute>}>
@@ -79,6 +82,8 @@ function App() {
               <Route path="attendance" element={<AttendanceStudent />} />
               <Route path="notice" element={<NoticeStudent/>} />
               <Route path="payment" element={<Payment/>} />
+              
+              {/* <Route path='sub-teach' element={<StudentSubjectTeacher/>} /> */}
             </Route>
   
             <Route path="teacher"  element={<ProtectedRoute allowedRoles={['TEACHER']}><Teacher/></ProtectedRoute>}>

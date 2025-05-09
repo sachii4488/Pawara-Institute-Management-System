@@ -1,168 +1,171 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Button, Table, TableBody, TableCell, TableHead, TableRow, Typography, Select, MenuItem, Alert, FormControl, InputLabel } from '@mui/material';
-import axios from 'axios';
-import moment from 'moment';
-import { baseUrl } from '../../../environment';
+import React, { useState } from 'react';
+import { 
+  Container, 
+  Typography, 
+  Button, 
+  List, 
+  ListItem, 
+  ListItemText, 
+  Box, 
+  Alert, 
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogContentText,
+  DialogActions
+} from '@mui/material';
 
-const AttendanceTeacher = () => {
-  const [students, setStudents] = useState([]);
-  const [attendanceStatus, setAttendanceStatus] = useState({});
-  const [attendanceTaken, setAttendanceTaken] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [attendeeClass, setAttendeeClass] = useState([])
-  const [selectedClass, setSelectedClass] = useState(''); // New state for selected class
-  
-  const todayDate = moment().format('YYYY-MM-DD'); // Get today's date in 'YYYY-MM-DD' format
+const studentsList = [
+  { id: 1, name: 'Nheli Diwaya' },
+  { id: 2, name: 'Sachini Natasha' },
+  { id: 3, name: 'Sahan Rashmika' },
+  { id: 4, name: 'Saduni Bhagya' },
+  { id: 5, name: 'Nimesha Sammani' },
+  { id: 6, name: 'Sonali Niduka' },
+  { id: 7, name: 'Malsha Wanasinghe' },
+  { id: 8, name: 'Isuru Sampath' },
+  { id: 9, name: 'Yugan Mihinsa' },
+  { id: 10, name: 'Chamika Sithumini' },
+];
 
-  // Fetch all students and check if attendance is already taken
-  useEffect(() => {
-    const fetchStudentsAndCheckAttendance = async () => {
-      try {
-        const attendee = await axios.get(`${baseUrl}/class/attendee`);
-        console.log("attendee",attendee)
-         setAttendeeClass(attendee.data);
+const mockAttendance = [
+  { studentId: 1, date: '2024-03-01T08:30:00', status: 'Present' },
+  { studentId: 1, date: '2024-03-02T08:35:15', status: 'Present' },
+  { studentId: 2, date: '2024-03-01T08:28:45', status: 'Present' },
+];
 
-         if(attendeeClass.length>0 && selectedClass){
-            // Check if attendance is already taken for today
-            const attendanceResponse = await axios.get(`${baseUrl}/attendance/check/${selectedClass.id}`);
+const classes = [
+  { id: 1, name: 'Grade 11 Science (Mrs Iresha)' },
+  { id: 2, name: 'Grade 8 Maths (Mr Nayana)' },
+  { id: 3, name: 'Grade 11 Maths (Mrs Nayana)' },
+  { id: 4, name: 'Grade 6 Sinhala (Mrs Nadeeka)' },
+  { id: 5, name: 'Grade 11 Maths (Mr Amith Kumara)' },
+  { id: 6, name: 'Grade 5 Tamil (Mrs Tashma)' },
+  { id: 7, name: 'Grade 8 History (Mrs Mangalika)' },
+  { id: 8, name: 'Grade 03 English (Mr Prasad)' },
+  { id: 9, name: 'Grade 11 Dancing (Mrs Nayomi)' },
+  { id: 10, name: 'Grade 11 Commerce (Mrs Senani)' },
+];
 
-            setAttendanceTaken(attendanceResponse.data.attendanceTaken);
-              // Fetch students if attendance has not been taken yet
-        if (!attendanceResponse.data.attendanceTaken) {
-            const studentsResponse = await axios.get(`${baseUrl}/student/fetch-with-query`, { params: { student_classes: selectedClass.id} }); // Fetch based on class
-            setStudents(studentsResponse.data.data);
-  
-            // Initialize attendance status for each student
-            const initialStatus = {};
-            studentsResponse.data.data.forEach((student) => {
-              initialStatus[student._id] = 'Present'; // default value
-            });
-            setAttendanceStatus(initialStatus);
-          }
-         }
-        
-      
-      
-      
+const AttendancePage = () => {
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [attendanceDetails, setAttendanceDetails] = useState([]);
+  const [message, setMessage] = useState('');
 
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching students or checking attendance:', error);
-      }
-    };
-
-    fetchStudentsAndCheckAttendance();
-  }, [todayDate, selectedClass]);
-
-  // Handle attendance status change for each student
-  const handleStatusChange = (studentId, status) => {
-    setAttendanceStatus((prevState) => ({
-      ...prevState,
-      [studentId]: status,
-    }));
+  const handleStudentClick = (student) => {
+    setSelectedStudent(student);
+    const studentAttendance = mockAttendance.filter(
+      record => record.studentId === student.id
+    );
+    setAttendanceDetails(studentAttendance);
   };
 
-  // Handle class selection
-  const handleClassChange = (event) => {
-    let input = event.target.value;
-    setSelectedClass({id:input.split(",")[0], class_text:input.split(",")[1]});
-    console.log(event.target.value)
+  const formatDateTime = (isoString) => {
+    const date = new Date(isoString);
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
   };
-
-  // Submit attendance for all students
-  const submitAttendance = async () => {
-    try {
-      const attendanceRecords = students.map((student) => ({
-        studentId: student._id,
-        date: todayDate,
-        status: attendanceStatus[student._id],
-        classId: selectedClass.id, // Include the class
-      }));
-      
-      // Send attendance records to backend
-      await Promise.all(attendanceRecords.map((record) =>
-        axios.post(`${baseUrl}/attendance/mark`, record)
-      ));
-
-      alert('Attendance submitted successfully');
-      setAttendanceTaken(true); // Set attendance as taken
-    } catch (error) {
-      console.error('Error submitting attendance:', error);
-    }
-  };
-
-  if (loading) {
-    return <Typography>Loading...</Typography>;
-  }
 
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>Mark Attendance for All Students</Typography>
-      {attendeeClass.length>0? <Alert severity="info" sx={{ mb: 3 }}>
-          Your Are Attendee of {attendeeClass.length} class{attendeeClass.length>1 && 'es'}. Select the class and Take attendance.
-        </Alert>:
-        <Alert severity='info'>You are not attendee of any Class.</Alert>}
-     {attendeeClass.length>0 && <FormControl fullWidth sx={{ mb: 3 }}>
-        <InputLabel>Select Class</InputLabel>
-        <Select value={selectedClass?`${selectedClass.id},${selectedClass.class_text}`:""} onChange={handleClassChange}>
-          <MenuItem value={''}>Select Class</MenuItem>
-          {attendeeClass && attendeeClass.map((student_classes,i)=>(
-             <MenuItem key={i} value={`${student_classes.classId},${student_classes.class_text}`}>{student_classes.class_text}</MenuItem>
+    <Container sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
+        Pawara Institute Management System - Student Attendance
+      </Typography>
+
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Select Class
+        </Typography>
+        <Box sx={{ 
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          gap: 2,
+          mb: 4
+        }}>
+          {classes.map(cls => (
+            <Button
+              key={cls.id}
+              variant={selectedClass === cls.id ? 'contained' : 'outlined'}
+              onClick={() => setSelectedClass(cls.id)}
+              sx={{
+                py: 2,
+                textTransform: 'none',
+                fontSize: '0.9rem',
+                whiteSpace: 'normal',
+                textAlign: 'center'
+              }}
+            >
+              {cls.name}
+            </Button>
           ))}
-        
-          {/* Add more class options as needed */}
-        </Select>
-      </FormControl>} 
+        </Box>
+      </Box>
 
- 
-      {attendeeClass.length>0 && selectedClass && attendanceTaken && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Attendance has already been taken for today for Class {selectedClass.class_text}
-        </Alert>
-      ) }
-        {attendeeClass.length>0 && selectedClass && !attendanceTaken && students.length<1 && (
-            <Alert severity="info" sx={{ mb: 3 }}>
-            There is no students in { selectedClass.class_text} class now.
-          </Alert>
-        )}
-      {attendeeClass.length>0 && selectedClass && !attendanceTaken && students.length>0 && (
-        <>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Student Name</TableCell>
-                <TableCell>Roll Number</TableCell>
-                <TableCell>Attendance Status</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {students.map((student) => (
-                <TableRow key={student._id}>
-                  <TableCell>{student.name}</TableCell>
-                  <TableCell>{student.rollNumber}</TableCell>
-                  <TableCell>
-                    <Select
-                      value={attendanceStatus[student._id]}
-                      onChange={(e) => handleStatusChange(student._id, e.target.value)}
-                    >
-                      <MenuItem value="Present">Present</MenuItem>
-                      <MenuItem value="Absent">Absent</MenuItem>
-                    </Select>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      {selectedClass && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            {classes.find(c => c.id === selectedClass)?.name} - Students
+          </Typography>
+          
+          <List sx={{ mb: 4 }}>
+            {studentsList.map(student => (
+              <ListItem 
+                key={student.id} 
+                button 
+                onClick={() => handleStudentClick(student)}
+                sx={{ 
+                  '&:hover': { backgroundColor: '#f5f5f5' },
+                  mb: 1,
+                  borderRadius: 1
+                }}
+              >
+                <ListItemText
+                  primary={student.name}
+                  secondary="Click to view attendance records"
+                />
+              </ListItem>
+            ))}
+          </List>
 
-          <Button variant="contained" color="primary" onClick={submitAttendance} sx={{ mt: 3 }}>
-            Submit Attendance
-          </Button>
-        </>
+          {message && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              Attendance updates are managed through the mobile application
+            </Alert>
+          )}
+        </Box>
       )}
 
-      
+      <Dialog open={!!selectedStudent} onClose={() => setSelectedStudent(null)}>
+        <DialogTitle>
+          Attendance Records for {selectedStudent?.name}
+        </DialogTitle>
+        <DialogContent>
+          {attendanceDetails.length > 0 ? (
+            attendanceDetails.map((record, index) => (
+              <Box key={index} sx={{ mb: 2 }}>
+                <DialogContentText>
+                  <strong>Date:</strong> {formatDateTime(record.date)}
+                </DialogContentText>
+                <DialogContentText>
+                  <strong>Status:</strong> {record.status}
+                </DialogContentText>
+                <hr style={{ margin: '10px 0' }} />
+              </Box>
+            ))
+          ) : (
+            <DialogContentText>
+              No attendance records available
+            </DialogContentText>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSelectedStudent(null)} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
 
-export default AttendanceTeacher;
+export default AttendancePage;
