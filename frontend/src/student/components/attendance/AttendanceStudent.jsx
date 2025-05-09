@@ -18,7 +18,6 @@ import {
 const studentsList = [
   { id: 1, name: 'Nheli Diwaya' },
   { id: 2, name: 'Sachini Natasha' },
-  { id: 3, name: 'Sahan Rashmika' },
   { id: 4, name: 'Saduni Bhagya' },
   { id: 5, name: 'Nimesha Sammani' },
   { id: 6, name: 'Sonali Niduka' },

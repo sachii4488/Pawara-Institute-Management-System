@@ -18,7 +18,6 @@ import { baseUrl } from "../../../environment";
 import styled from "@emotion/styled";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from '@mui/icons-material/Visibility';
-
 import CustomizedSnackbars from "../../../basic utility components/CustomizedSnackbars";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 const Item = styled(Paper)(({ theme }) => ({
